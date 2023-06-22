@@ -171,7 +171,7 @@ let searchItem = ref('');
                 </NuxtLink>
 
                 <button
-                    @click="userStore.isMouseOverlay = true"
+                    @click="userStore.isMenuOverlay = true"
                     class="md:hidden block rounded-full p-1.5 -mt-[4px] hover:bg-gray-200"
                 >
                     <Icon name="radix-icons:hamburger-menu" size="33" />
