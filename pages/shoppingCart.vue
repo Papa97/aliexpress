@@ -2,29 +2,13 @@
 import MainLayout from '~/layouts/MainLayout.vue';
 import { useUserStore } from '~/stores/user';
 const userStore = useUserStore();
+const user = useSupabaseUser();
 
 let selectedArray = ref([]);
 
 onMounted(() => {
     setTimeout(() => (userStore.isLoading = false), 200);
 });
-
-const products = [
-    {
-        id: 1,
-        title: 'title 1',
-        description: 'desc 1',
-        url: 'https://picsum.photos/id/7/800/800',
-        price: 999,
-    },
-    {
-        id: 2,
-        title: 'title 2',
-        description: 'desc 2',
-        url: 'https://picsum.photos/id/71/800/800',
-        price: 999,
-    },
-];
 
 const cards = ref(['visa.png', 'mastercard.png', 'paypal.png', 'applepay.png']);
 
@@ -41,6 +25,7 @@ const selectedRadioFunc = (e) => {
         selectedArray.value.push(e);
         return;
     }
+
     selectedArray.value.forEach((item, index) => {
         if (e.id != item.id) {
             selectedArray.value.push(e);
@@ -50,7 +35,7 @@ const selectedRadioFunc = (e) => {
     });
 };
 
-const goToCheckOut = () => {
+const goToCheckout = () => {
     let ids = [];
     userStore.checkout = [];
 
@@ -70,13 +55,13 @@ const goToCheckOut = () => {
     <MainLayout>
         <div id="ShoppingCartPage" class="mt-4 max-w-[1200px] mx-auto px-2">
             <div
-                v-if="false"
+                v-if="!userStore.cart.length"
                 class="h-[500px] flex items-center justify-center"
             >
                 <div class="pt-20">
                     <img class="mx-auto" width="250" src="/cart-empty.png" />
                     <div class="text-xl text-center mt-4">No items yet?</div>
-                    <div v-if="true" class="text-center flex">
+                    <div v-if="!user" class="text-center flex">
                         <NuxtLink
                             to="/auth"
                             class="bg-[#fd374f] w-full text-white text-[21px] font-semibold p-1.5 rounded-full mt-4"
@@ -90,7 +75,7 @@ const goToCheckOut = () => {
                 <div class="md:w-[65%]">
                     <div class="bg-white rounded-lg p-4">
                         <div class="text-2xl font-bold mb-2">
-                            Shopping Cart (0)
+                            Shopping Cart ({{ userStore.cart.length }})
                         </div>
                     </div>
 
@@ -101,7 +86,7 @@ const goToCheckOut = () => {
                     </div>
 
                     <div id="Items" class="bg-white rounded-lg p-4 mt-4">
-                        <div v-for="product in products">
+                        <div v-for="product in userStore.cart">
                             <CartItem
                                 :product="product"
                                 :selectedArray="selectedArray"
