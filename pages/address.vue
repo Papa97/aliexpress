@@ -16,6 +16,7 @@ let isWorking = ref(false);
 let error = ref(null);
 
 watchEffect(async () => {
+    console.log(user.value.id);
     currentAddress.value = await useFetch(
         `/api/prisma/get-address-by-user/${user.value.id}`
     );

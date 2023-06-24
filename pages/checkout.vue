@@ -4,6 +4,9 @@ import { useUserStore } from '~/stores/user';
 const userStore = useUserStore();
 const user = useSupabaseUser();
 const route = useRoute();
+
+definePageMeta({ middleware: 'auth' });
+
 let selectedArray = ref([]);
 
 let stripe = null;
@@ -16,7 +19,7 @@ let currentAddress = ref(null);
 let isProccessing = ref(false);
 
 onBeforeMount(async () => {
-    if (user.checkout.length < 1) {
+    if (userStore.checkout.length < 1) {
         return navigateTo('/shoppingCart');
     }
 
@@ -39,7 +42,7 @@ watchEffect(() => {
 onMounted(() => {
     isProccessing.value = true;
 
-    useUserStore.checkout.forEach((item) => {
+    userStore.checkout.forEach((item) => {
         total.value += item.price;
     });
 });
@@ -53,13 +56,104 @@ watch(
     }
 );
 
-const stripeInit = async () => {};
+const stripeInit = async () => {
+    const runtimeConfig = useRuntimeConfig();
+    console.log(runtimeConfig.public.stripePk);
+    stripe = Stripe(runtimeConfig.public.stripePk);
 
-const pay = async () => {};
+    let res = await $fetch('/api/stripe/paymentintent', {
+        method: 'POST',
+        body: {
+            amount: total.value,
+        },
+    });
+    clientSecret = res.client_secret;
 
-const createOrder = async (stripeId) => {};
+    elements = stripe.elements();
+    var style = {
+        base: {
+            fontSize: '18px',
+        },
+        invalid: {
+            fontFamily: 'Arial, sans-serif',
+            color: '#EE4B2B',
+            iconColor: '#EE4B2B',
+        },
+    };
+    card = elements.create('card', {
+        hidePostalCode: true,
+        style: style,
+    });
 
-const showError = (errorMsgText) => {};
+    // Stripe injects an iframe into the DOM
+    card.mount('#card-element');
+    card.on('change', function (event) {
+        // Disable the Pay button if there are no card details in the Element
+        document.querySelector('button').disabled = event.empty;
+        document.querySelector('#card-error').textContent = event.error
+            ? event.error.message
+            : '';
+    });
+
+    isProccessing.value = false;
+};
+
+const pay = async () => {
+    if (currentAddress.value && currentAddress.value.data == '') {
+        showError('Please add shipping address');
+        return;
+    }
+
+    isProccessing.value = true;
+
+    let result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card: card },
+    });
+
+    if (result.error) {
+        showError(result.error.message);
+        isProccessing.value = false;
+    } else {
+        await createOrder(result.paymentIntent.id);
+        userStore.cart = [];
+        userStore.checkout = [];
+        setTimeout(() => {
+            return navigateTo('/success');
+        }, 500);
+    }
+};
+
+const createOrder = async (stripeId) => {
+    console.log('create order');
+    console.log(currentAddress.value);
+    try {
+        await useFetch(`/api/prisma/create-order`, {
+            method: 'POST',
+            body: {
+                userId: user.value.id,
+                stripeId: stripeId,
+                name: currentAddress.value.data.name,
+                address: currentAddress.value.data.address,
+                zipcode: currentAddress.value.data.zipcode,
+                city: currentAddress.value.data.city,
+                country: currentAddress.value.data.country,
+                products: userStore.checkout,
+            },
+        });
+        console.log('success');
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+const showError = (errorMsgText) => {
+    let errorMsg = document.querySelector('#card-error');
+
+    errorMsg.textContent = errorMsgText;
+    setTimeout(() => {
+        errorMsg.textContent = '';
+    }, 4000);
+};
 </script>
 
 <template>

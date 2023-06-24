@@ -2,19 +2,19 @@
 import { useUserStore } from '~/stores/user';
 const userStore = useUserStore();
 
-// const client = useSupabaseClient();
-// const user = useSupabaseUser();
+const client = useSupabaseClient();
+const user = useSupabaseUser();
 
 const goTo = (url) => {
     userStore.isMenuOverlay = false;
     return navigateTo(`/${url}`);
 };
 
-// const signOut = () => {
-//     client.auth.signOut();
-//     userStore.isMenuOverlay = false;
-//     return navigateTo('/');
-// };
+const signOut = () => {
+    client.auth.signOut();
+    userStore.isMenuOverlay = false;
+    return navigateTo('/');
+};
 
 const signIn = () => {
     userStore.isMenuOverlay = false;

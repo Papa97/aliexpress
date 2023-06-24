@@ -45,6 +45,8 @@ const goToCheckout = () => {
         return ids.indexOf(item.id) != -1;
     });
 
+    console.log(res);
+
     res.forEach((item) => userStore.checkout.push(toRaw(item)));
 
     return navigateTo('/checkout');
@@ -110,7 +112,7 @@ const goToCheckout = () => {
                             </div>
                         </div>
                         <button
-                            @click="goToCheckOut"
+                            @click="goToCheckout"
                             class="flex items-center justify-center bg-[#fd374f] w-full text-white text-[21px] font-semibold p-1.5 rounded-full mt-4"
                         >
                             Checkout
